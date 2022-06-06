@@ -398,6 +398,22 @@ async def my_account(ctx):
     tmp.add_field(name="This user hasn't competed in a rated match yet.",value = "Join rated matches to gain rating")
     await ctx.send(embed = tmp)
     return
+  col = discord.Color.light_gray()
+  now = int(db['ccprating'][str(ctx.author.id)]['rating'])
+  if (now >= 1200):
+    col = discord.Color.green()
+  if (now >= 1400):
+    col = discord.Color.teal()
+  if (now >= 1600):
+    col = discord.Color.blue()
+  if (now >= 1900):
+    col = discord.Color.purple()
+  if (now >= 2100):
+    col = discord.Color.gold()
+  if (now >= 2400):
+    col = discord.Color.dark_red()
+  tmp=discord.Embed(title="User profile",color = col)
+  tmp.set_footer(text="beta tes v.1.5")
   tmp.add_field(name="Total Competed",value=str(tot), inline=False)
   tmp.add_field(name="Current Rating",value=str(db['ccprating'][str(ctx.author.id)]['rating']), inline=False)
   mux = 0
@@ -405,10 +421,6 @@ async def my_account(ctx):
     if(int(i) > mux): mux = int(i)
   tmp.add_field(name="Max Rating",value=str(mux))
   await ctx.send(embed = tmp)
-      #db['ccprating'][str(ctx.author.id)]['perf'] = []
-      #db['ccprating'][str(ctx.author.id)]['rating'] = 0
-      #db['ccprating'][str(ctx.author.id)]['rating_change'] = [0]
-      #db['ccprating'][str(ctx.author.id)]['count'] = 1
     
 #########################################################
 @client.event
