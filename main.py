@@ -694,11 +694,6 @@ async def on_ready():
     game = discord.Game(st)
     await client.change_presence(status=discord.Status.online, activity=game)
     cha = client.get_channel(977855894471729212)
-    while(False):
-      str = input()
-      await cha.send(str)
-      time.sleep(1)
-     
   
 keep_alive()
 try:
