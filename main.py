@@ -8,6 +8,7 @@ from replit import db
 import time
 import json
 import math
+import os
 from bs4 import BeautifulSoup as bsp
 
 client = commands.Bot(command_prefix='loli~', help_command=None)
@@ -51,12 +52,13 @@ desc = ["This is a speedy round. That is, only the first AC can get all point fr
 #for i in range(100,4001,100):
   #db['problem'][str(i)]=[]
 #db['problem_now'] = 500
+
 def get_problem(diff):
-  return db['problem'][str(diff)]
+  return db['problem'].get(str(diff))
   
 @client.event
 async def on_message(msg):
-    global busy, bot_talk, ok, r_time, db, user, user_name, user_id , user_score, st, my_ch, my_ch_1, user_final_time, prob, prob2, score, type, name, aced, solve_count, ac, chl, for_use, rated
+    global busy, bot_talk, ok, r_time, db, user, user_name, user_id , user_score, st, my_ch, my_ch_1, user_final_time, prob, prob2, score, type, name, aced, solve_count, ac, chl, for_use, rated, r_time, host
     cha = client.get_channel(chl)
     bch = client.get_channel(bot_talk)
     if(msg.author.id==966927096033181718):return
@@ -68,7 +70,9 @@ async def on_message(msg):
       busy = 1
       l=msg.content.split(",")
       if(l[0]=="r_u"):
-          if(r_time<=int(l[1])):return
+          if(r_time<=int(l[1])):
+            busy = 0
+            return
           r_time = int(l[1])
           if(ok == 0):
             ok = 3
@@ -81,6 +85,8 @@ async def on_message(msg):
             type = db['ccpcontest'][a][5]
             user_id = db['ccpcontest'][a][6]
             rated = db['ccpcontest'][a][7]
+            host = db['ccpcontest'][a][8]
+            print(db['ccpcontest'][a]);
             for i in range(0,len(prob)):
               aced.append("0")
               solve_count.append(0)
@@ -92,6 +98,7 @@ async def on_message(msg):
               for j in range(len(prob)):
                 ac[i].append(False)
           try:
+            if(len(user) == 0):busy=0
             tmp = discord.Embed(title=name)
             cha = client.get_channel(my_ch)
             msg = await cha.fetch_message(my_ch_1)
@@ -101,7 +108,9 @@ async def on_message(msg):
              print("update time failed")          
           try:
             await update_status()
+            busy = 0
           except:
+            busy = 0
             print("update status failed") 
 
       if(msg.content.strip()=="unlock"):
@@ -110,11 +119,14 @@ async def on_message(msg):
       if(msg.content.strip()=="e_c"):
         game = discord.Game(st)
         await client.change_presence(status=discord.Status.online, activity=game)
-        if(ok == 0):return
+        if(ok == 0 or r_time == 0):
+          busy = 0
+          return
+        r_time = 0
         await cha.send(embed = discord.Embed(title=name,description="The match has ended."))
         try:
-          tmp = discord.Embed(title=name)
           ok = 0
+          tmp = discord.Embed(title=name)
           cha = client.get_channel(my_ch)
           msg = await cha.fetch_message(my_ch_1)
           tmp.add_field(name="Remaining time", value="The match has ended.", inline=False)
@@ -122,7 +134,9 @@ async def on_message(msg):
         except:
           print("update time failed")
         await update_status()
-        if(len(user_name)==0):return
+        if(len(user_name)==0):
+          ok=busy=0
+          return
         fin = []
         for i in range(len(user)):
           pi = [user_name[i],user_score[i],user_id[i],-user_final_time[i]]
@@ -194,6 +208,7 @@ async def join(ctx):
        return
     try:
       cf_name = db['user_account'].get(str(ctx.author.id))
+      print(cf_name)
       if(cf_name==None):
           await ctx.channel.send(embed = discord.Embed(title=name,description="You need to set your account to your codeforces account first."))
           return
@@ -212,7 +227,7 @@ async def join(ctx):
 ##########################################################
 @client.command()
 async def start(ctx):
-  global host,channel, ok, db, host, prob, prob2, score, r_time, clock, user, user_name, user_id, bot_talk, ac, my_ch, my_ch_1, user_final_time, rated
+  global host,channel, ok, db, host_id, prob, prob2, score, r_time, clock, user, user_name, user_id, bot_talk, ac, my_ch, my_ch_1, user_final_time, rated
   if(ok != 2):
     await ctx.channel.send(embed = discord.Embed(title=name,description="Exception occured."))
     return
@@ -242,7 +257,7 @@ async def start(ctx):
   for i in range(len(prob)):
     ur="https://codeforces.com/problemset/problem/"+str(prob[i])+"/"+str(prob2[i])
     tmp.add_field(name="Question # "+str(i+1)+" : "+str(prob[i])+" "+str(prob2[i]), value="[Score: "+str(score[i])+"]("+ur+")", inline=False)
-  a = [prob,prob2,score,user_name,user_name,type,user_id,rated]
+  a = [prob,prob2,score,user_name,user_name,type,user_id,rated,host]
   b = str(db['contest_count'])
   db['ccpcontest'][b] = a
   await ctx.send(embed = tmp)
@@ -277,7 +292,7 @@ async def prepare(ctx,arg):
     await ctx.channel.send(embed = discord.Embed(title=name,description="Please wait... \n(May took several minutes.)"))
     try:
         l=arg.split(",")
-        if(len(l) <= 5 or len(l) > 21 or len(l) % 3 != 0): #max 6 requests
+        if(len(l) <= 5 or len(l) > 33 or len(l) % 3 != 0): #max 10requests
            ok = 0 
            await ctx.channel.send(embed = discord.Embed(title=name,description="Format wrong or too long"))
            return
@@ -317,6 +332,7 @@ async def prepare(ctx,arg):
         for i in range(3,len(l),3):
           if(int(l[i+2])>4000 or int(l[i+2])<100):
             await ctx.send(embed = discord.Embed(title=name,description="Score limit exceed."))
+            ok = 0
             return
           exit_code = await find_problem(int(l[i]),int(l[i+1]),int(l[i+2])) 
           if(exit_code!=0):
@@ -342,6 +358,7 @@ async def prepare(ctx,arg):
     tmp=discord.Embed(title=name)
     tmp.add_field(name="CCP Match # "+str(db['contest_count']), value="Host by "+host, inline=False)
     tmp.add_field(name="Contest type", value=desc[type], inline=False)
+    tmp.add_field(name="Duration", value=str(r_time)+" mins", inline=False)
     if(rated == 1):
       tmp.add_field(name="Rated", value="This match is rated.", inline=False)
     if(rated == 0):
@@ -413,8 +430,18 @@ async def my_account(ctx):
   if (now >= 2400):
     col = discord.Color.dark_red()
   tmp=discord.Embed(title="User profile",color = col)
-  tmp.set_footer(text="beta tes v.1.5")
+  tmp.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+  tmp.set_footer(text="beta test v.1.5")
   tmp.add_field(name="Total Competed",value=str(tot), inline=False)
+  xp = db['ccprating'][str(ctx.author.id)]['perf']
+  xr = db['ccprating'][str(ctx.author.id)]['rating_change']
+  dr = xr[len(xr)-1]-xr[len(xr)-2]
+  sdr ="("
+  if(dr > 0):
+    sdr += "+"
+  sdr += str(dr)
+  sdr += ")"
+  tmp.add_field(name="Last Match Performance",value=str(xp[len(xp)-1])+" "+sdr, inline=False)
   tmp.add_field(name="Current Rating",value=str(db['ccprating'][str(ctx.author.id)]['rating']), inline=False)
   mux = 0
   for i in db['ccprating'][str(ctx.author.id)]['rating_change']:
@@ -541,10 +568,14 @@ async def find_problem(diff,x,cost):
     global prob, prob2,  score, aced, solve_count
     try:
       probs = get_problem(diff)
+      if(probs == None):
+          return 102
       if(x>len(probs)):
           return 101  
       arr = []
+      cnt = 0
       while(len(arr) != x):
+        cnt += 1
         i = random.randint(0,len(probs)-1)       
         if(i not in arr):
           arr.append(i)
@@ -554,6 +585,7 @@ async def find_problem(diff,x,cost):
           prob2.append(s2)
           score.append(cost)
           aced.append("0")
+        if(cnt >= 100):return 106
       return 0
     except:
       return 100
@@ -569,7 +601,7 @@ async def update_rating(fin):
       db['ccprating'][str(fin[i][2])]['rating'] = 0
       db['ccprating'][str(fin[i][2])]['rating_change'] = [0]
       db['ccprating'][str(fin[i][2])]['count'] = 1
-      all_rating.append(1000)
+      all_rating.append(500)
     else:
       db['ccprating'][str(fin[i][2])]['count'] += 1
       all_rating.append(db['ccprating'][str(fin[i][2])]['rating'])
@@ -598,9 +630,9 @@ async def update_rating(fin):
     c_rating = db['ccprating'][str(fin[i][2])]['rating']
     delta = new_per - c_rating 
     if(delta < 0):
-      c_rating += (int)(delta/(4-delta/300))
+      c_rating += (int)(delta/(2-delta/300))
     else:
-      c_rating += (int)(delta/4)
+      c_rating += (int)(delta/2)
     delta = new_per - c_rating 
     if(db['ccprating'][str(fin[i][2])]['count'] == 1):
       c_rating += 600
@@ -617,6 +649,10 @@ async def update_rating(fin):
 ####################################################
 @client.command()
 async def update_problem(ctx):
+    global ok
+    if(ok == 3):
+      await ctx.channel.send(embed = discord.Embed(title=name,description="You can't do this command during contest."))
+      return
     try:
       r=requests.get("https://codeforces.com/api/problemset.problems",timeout=10)
       data=json.loads(r.text)
@@ -657,6 +693,16 @@ async def on_ready():
     global st
     game = discord.Game(st)
     await client.change_presence(status=discord.Status.online, activity=game)
-
+    cha = client.get_channel(977855894471729212)
+    while(False):
+      str = input()
+      await cha.send(str)
+      time.sleep(1)
+     
+  
 keep_alive()
-client.run(db['token'])
+try:
+  client.run(db['token'])
+except:
+  os.system("kill 1")
+
