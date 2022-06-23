@@ -53,6 +53,7 @@ desc = ["This is a speedy round. That is, only the first AC can get all point fr
   #db['problem'][str(i)]=[]
 #db['problem_now'] = 500
 
+
 def get_problem(diff):
   return db['problem'].get(str(diff))
   
@@ -67,6 +68,8 @@ async def on_message(msg):
       await cha.send(embed = discord.Embed(title="The loli bot is currently unavailable."))
       return
     if(msg.channel.id == bot_talk):
+      busy = 1
+      await client.process_commands(msg)
       busy = 1
       l=msg.content.split(",")
       if(l[0]=="r_u"):
@@ -685,15 +688,32 @@ async def orz(ctx):
    await ctx.channel.send(embed = discord.Embed(title=ctx.author.name+" orz"))
 
 @client.command()
-async def version(ctx):
-   await ctx.channel.send(embed = discord.Embed(title=name,description="Ver 1.4 beta"))
+async def sendhehe(ctx,*str):
+   cha = client.get_channel(940128222182514709)
+   out = ""
+   print(len(str))
+   print(str[0])
+   for i in range(0,len(str)):
+     out += str[i] + " "
+   await cha.send(out)
+
+@client.command()
+async def senddata(ctx):
+  cha = client.get_channel(bot_talk)
+  await cha.send("```count: "+str(db['contest_count'])+"```")
+  time.sleep(0.1)
+  for i in db['ccprating']:
+    await cha.send("```ccprating: "+str(i)+":"+str(db['ccprating'][str(i)])+"```")
+    time.sleep(0.1)
+  for i in db['user_account']:
+    await cha.send("```user_account: "+str(i)+":"+str(db['user_account'][str(i)])+"```")
+    time.sleep(0.1)
   
 @client.event
 async def on_ready():
     global st
     game = discord.Game(st)
-    await client.change_presence(status=discord.Status.online, activity=game)
-    cha = client.get_channel(977855894471729212)
+    await client.change_presence(status=discord.Status.online, activity=game) 
   
 keep_alive()
 try:
